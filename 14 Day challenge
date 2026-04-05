@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
+<title>تحدي الـ ١٤ يوم للانضباط</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+body{background:#09090b;font-family:'Segoe UI','Tahoma',Arial,sans-serif;color:#f4f4f5;min-height:100vh;}
+#app{max-width:480px;margin:0 auto;padding:14px 14px 80px;}
+button{cursor:pointer;font-family:inherit;}
+button:active{transform:scale(.97);}
+input,textarea{font-family:inherit;}
+input::placeholder{color:#52525b;}
+::-webkit-scrollbar{width:0;height:0;}
+
+/* Animations */
+@keyframes slideDown{from{opacity:0;transform:translateX(-50%) translateY(-14px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+@keyframes popIn{from{opacity:0;transform:scale(.72)}to{opacity:1;transform:scale(1)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.82}}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+
+/* Toast */
+.toast{position:fixed;top:18px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#1e1e2e,#16213e);border:1px solid #a855f7;border-radius:16px;padding:12px 20px;z-index:500;max-width:88vw;text-align:center;font-size:13px;font-weight:700;color:#fff;line-height:1.6;animation:slideDown .35s ease;box-shadow:0 0 28px #a855f755;}
+.modal-bg{position:fixed;inset:0;background:#000000cc;z-index:400;display:flex;align-items:center;justify-content:center;padding:16px;}
+.modal{background:linear-gradient(135deg,#1a1a2e,#0d0d1a);border-radius:24px;padding:32px 24px;text-align:center;max-width:320px;width:100%;animation:popIn .5s ease;}
+
+/* Tabs */
+.tabs{display:flex;background:#18181b;border-radius:12px;padding:4px;margin-bottom:14px;gap:3px;}
+.tab-btn{flex:1;padding:8px 0;border-radius:9px;border:none;background:transparent;color:#71717a;font-weight:700;font-size:12px;transition:all .2s;}
+.tab-btn.active{color:#fff;}
+
+/* Habit card */
+.habit-card{border-radius:14px;overflow:hidden;transition:all .25s;margin-bottom:8px;}
+.habit-row{display:flex;align-items:center;padding:12px 14px;gap:10px;}
+.check-btn{width:32px;height:32px;border-radius:9px;border:none;display:flex;align-items:center;justify-content:center;font-size:16px;color:#fff;flex-shrink:0;transition:all .25s;}
+.habit-title{font-weight:700;font-size:13px;}
+.habit-hint{color:#52525b;font-size:11px;margin-top:2px;}
+.xp-badge{border-radius:6px;padding:2px 7px;font-size:11px;font-weight:700;flex-shrink:0;}
+.steps-panel{padding:0 14px 14px;}
+.step-row{display:flex;gap:10px;align-items:flex-start;margin-bottom:9px;}
+.step-num{width:22px;height:22px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;}
+.step-text{color:#c4c4cc;font-size:13px;line-height:1.65;padding-top:2px;}
+.done-btn{width:100%;margin-top:14px;border:none;border-radius:10px;padding:10px;color:#fff;font-weight:800;font-size:13px;}
+
+/* Stats */
+.stat-box{text-align:center;}
+.stat-val{font-size:17px;font-weight:900;}
+.stat-lbl{font-size:10px;color:#71717a;}
+.ring{width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;}
+.ring-inner{width:36px;height:36px;border-radius:50%;background:#18181b;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;}
+
+/* Progress bar */
+.progress-track{background:#27272a;border-radius:100px;height:5px;}
+.progress-fill{height:100%;border-radius:100px;transition:width .6s cubic-bezier(0.34,1.56,0.64,1);}
+
+/* Badge screen */
+.badge-ring{position:relative;display:inline-flex;align-items:center;justify-content:center;width:180px;height:180px;border-radius:50%;padding:4px;}
+.badge-ring-bg{position:absolute;inset:0;border-radius:50%;}
+.badge-inner{position:absolute;inset:4px;border-radius:50%;background:#09090b;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.spin-ring{animation:spin 8s linear infinite;}
+</style>
+
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+// ─── DATA ────────────────────────────────────────────────────────
+const HABITS=[
+  {id:"salah",day:1,title:"الصلاة في وقتها",icon:"🕌",xp:30,color:"#10b981",steps:["حمّل تطبيق أذان على جوالك الآن","اضبط إشعار لكل صلاة — مو بس الفجر","بعد كل صلاة: أذكار ٣ دقائق بدون جوال","ربط الصلاة بعادة ثابتة = تثبّت تلقائياً"],praise:"🕌 الأساس اتحط — اللي بارك الله في وقته ما يعجزه شيء!"},
+  {id:"morning_adhkar",day:1,title:"أذكار الصباح والمساء",icon:"📿",xp:15,color:"#10b981",steps:["أذكار الصباح: بعد صلاة الفجر مباشرة","أذكار المساء: بعد صلاة العصر","استخدم تطبيق حصن المسلم","٥ دقائق كافية — الاستمرارية أهم من الكمية"],praise:"📿 أذكارك صانت يومك — هذا وقاية قبل ما يصير أي شيء!"},
+  {id:"study_333",day:3,title:"جلسة مذاكرة بطريقة ٣-٣-٣",icon:"📖",xp:25,color:"#6366f1",steps:["رتّب مواد اليوم: الأهم أولاً","امسح المادة كاملة أولاً كأنك تقرأ مجلة","ارجع للتفاصيل وركّز على ما لم تفهمه","بعد كل صفحة: أغلق الكتاب واختبر نفسك"],praise:"📖 ذاكرت بطريقة ذكية — هذا أقوى من ساعات عشوائية!"},
+  {id:"study_ai",day:3,title:"استخدم الذكاء الاصطناعي للمراجعة",icon:"🤖",xp:20,color:"#6366f1",steps:["بعد ما تذاكر وحدة: افتح ChatGPT أو Claude","اكتب: اسألني ١٠ أسئلة على هذا الموضوع","جاوب بدون رجوع للكتاب","سجّل وش صح ووش غلط — راجع الغلط بس"],praise:"🤖 استخدمت الذكاء الاصطناعي للتعلم مو للكسل!"},
+  {id:"study_reward",day:3,title:"نظام ٤٥-٥ للمذاكرة",icon:"⏱️",xp:20,color:"#6366f1",steps:["شغّل تايمر ٤٥ دقيقة — جوال مقلوب","ذاكر بتركيز كامل — لا واتساب","لما يرن: ٥ دقائق راحة بدون جوال","بعد ٣ دورات: مكافأة تحبها"],praise:"⏱️ أتممت دورة ٤٥ دق! دماغك يمتص المعلومات بشكل مختلف الآن!"},
+  {id:"skincare",day:5,title:"روتين العناية الصبح والمساء",icon:"✨",xp:15,color:"#ec4899",steps:["الصبح: غسيل + مرطب + واقي شمس","المساء: غسيل + مرطب + منتج علاجي","التزم بنفس المنتجات أسبوعين","خذ صورة قبل من اليوم الأول"],praise:"✨ روتين العناية = استثمار في نفسك يظهر بعد أسبوعين!"},
+  {id:"supplements",day:5,title:"المكملات الغذائية اليومية",icon:"💊",xp:10,color:"#ec4899",steps:["حدد مكملاً واحداً: فيتامين D أو أوميغا 3","حطه على طاولة الفطور","ابدأ بواحد فقط","الاستمرارية على واحد أفضل من عشرة"],praise:"💊 أخذت مكملك اليوم — الجسم يبني نفسه من تفاصيل صغيرة!"},
+  {id:"exercise",day:7,title:"تمرين ١٠-٢٠ دقيقة يومياً",icon:"🏃",xp:25,color:"#ef4444",steps:["الهدف: عادة مثل شرب الماء","يوتيوب: Chloe Ting 10 min workout","أو: ١٠ دقائق مشي سريع","بعد أسبوع زد ٥ دقائق"],praise:"🏃 تحركت اليوم! جسمك يفرز دوبامين حقيقي!"},
+  {id:"exercise2",day:7,title:"الرياضة = ضرورة مثل الأكل",icon:"💪",xp:20,color:"#ef4444",steps:["لا تسأل: هل أمارس؟ — السؤال: متى أمارس؟","حدد وقت ثابت يومياً","لو ما عندك وقت: ٥ دقائق أفضل من صفر","سجّل: اليوم تمرنت ✓"],praise:"💪 يوم رياضة آخر! الهوية الجديدة بدأت تتشكل!"},
+  {id:"money",day:9,title:"تتبع مصاريف اليوم",icon:"💰",xp:20,color:"#f59e0b",steps:["كل ما تصرف — سجّله فوراً","حتى الصغير: قهوة، شيبس","في نهاية اليوم: جمع الكل","مو للندم — للوعي"],praise:"💰 وعي مالي حقيقي! ما تقدر تتحكم في شيء ما تقيسه!"},
+  {id:"saving",day:9,title:"ادّخر مبلغاً صغيراً اليوم",icon:"🏦",xp:25,color:"#f59e0b",steps:["حدد نسبة ثابتة — ولو ٥٪","حوّله لحساب منفصل فوراً","الادخار قبل الصرف","هدف صغير أولاً قبل الاستثمار"],praise:"🏦 أول خطوة للحرية المالية! الثروة تبنى بالعادة مو بالمبلغ!"},
+  {id:"sadaqah",day:11,title:"الصدقة كل يوم جمعة",icon:"❤️",xp:20,color:"#10b981",steps:["كل جمعة: حدد مبلغاً صغيراً","عبر تطبيق أو تحويل لجمعية","الصدقة تزيد البركة في المال","ربطها بيوم الجمعة يجعلها ثابتة"],praise:"❤️ صدقت اليوم — هذا المبلغ الصغير فيه بركة كبيرة!"},
+  {id:"share",day:11,title:"شارك تقدمك مع شخص تثق به",icon:"🤝",xp:15,color:"#10b981",steps:["أخبر شخصاً بتحديك","الإعلان العلني يزيد الالتزام","شخص واحد يكفي","اطلب منه يسألك كل يوم"],praise:"🤝 أعلنت التزامك! الآن عندك سبب إضافي ما تتراجع!"},
+  {id:"fun",day:13,title:"ترفيه مخطط له — مو هروب",icon:"🎮",xp:15,color:"#8b5cf6",steps:["الترفيه = شاحن عصبي ضروري","حدد وقتاً ثابتاً: مثلاً ٨-١٠ مساءً","قبله: أنهِ مهمة واحدة","الأنمي بعد الإنجاز ألذ ١٠ مرات"],praise:"🎮 استمتعت بترفيه مكسوب — هذا انضباط حقيقي!"},
+  {id:"review",day:13,title:"مراجعة التحدي كاملة",icon:"📊",xp:30,color:"#8b5cf6",steps:["اكتب: وش تغير في ١٤ يوم؟","قيّم نفسك في كل محور من ١-١٠","وش أصعب عادة التزمت بها؟","وش الخطوة الجاية؟ حددها الآن"],praise:"📊 راجعت نفسك! هذا ما يفعله الناجحون!"},
+];
+
+const PHASES={1:{l:"الأساس الديني",d:"١-٢",c:"#10b981"},3:{l:"المذاكرة الذكية",d:"٣-٤",c:"#6366f1"},5:{l:"العناية بالنفس",d:"٥-٦",c:"#ec4899"},7:{l:"الرياضة اليومية",d:"٧-٨",c:"#ef4444"},9:{l:"العادات المالية",d:"٩-١٠",c:"#f59e0b"},11:{l:"المجتمع",d:"١١-١٢",c:"#10b981"},13:{l:"الترفيه والختام",d:"١٣-١٤",c:"#8b5cf6"}};
+
+const ARABIC_DAYS=["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
+const LS_KEY="disc14v7";
+
+// ─── STATE ───────────────────────────────────────────────────────
+let S={
+  userName:"",nameInput:"",
+  day:1,checked:{},history:{},totalXP:0,
+  tab:"اليوم",openHabit:null,
+  toast:null,toastTimer:null,
+  celebrate:false,penaltyModal:null,unlockModal:null,
+  dailyTask:"",dailyInput:"",dailyDone:false,
+};
+
+function todayKey(){return new Date().toISOString().slice(0,10);}
+function getArabicDay(){return ARABIC_DAYS[new Date().getDay()];}
+function getPhaseKey(d){return Object.keys(PHASES).filter(k=>parseInt(k)<=d).slice(-1)[0]||"1";}
+function getStreak(hist){let s=0;const t=new Date();for(let i=0;i<30;i++){const d=new Date(t);d.setDate(t.getDate()-i);const k=d.toISOString().slice(0,10);if(hist[k]?.length>0)s++;else if(i>0)break;}return s;}
+
+function loadData(){
+  try{
+    const d=JSON.parse(localStorage.getItem(LS_KEY)||"{}");
+    if(!d.userName)return;
+    Object.assign(S,{userName:d.userName||"",day:d.day||1,history:d.history||{},totalXP:d.totalXP||0});
+    const ids=d.history?.[todayKey()]||[];
+    S.checked=Object.fromEntries(ids.map(i=>[i,true]));
+    const dt=d.dailyTasks?.[todayKey()];
+    if(dt){S.dailyTask=dt.task||"";S.dailyInput=dt.task||"";S.dailyDone=dt.done||false;}
+    // penalty check
+    const penalized=d.penalizedDays||[];
+    const yest=new Date();yest.setDate(yest.getDate()-1);
+    const yKey=yest.toISOString().slice(0,10);
+    if(d.day>1&&!penalized.includes(yKey)){
+      const yDone=(d.history?.[yKey]||[]).length;
+      if(yDone===0){
+        const deduct=50,newXP=Math.max(0,(d.totalXP||0)-deduct);
+        S.totalXP=newXP;S.penaltyModal={deduct};
+        saveData({totalXP:newXP,penalizedDays:[...penalized,yKey]});
+      }
+    }
+  }catch(e){}
+}
+
+function saveData(extra={}){
+  try{
+    const prev=JSON.parse(localStorage.getItem(LS_KEY)||"{}");
+    const ids=Object.keys(S.checked).filter(k=>S.checked[k]);
+    const hist={...S.history,[todayKey()]:ids};
+    localStorage.setItem(LS_KEY,JSON.stringify({...prev,userName:S.userName,day:S.day,history:hist,totalXP:S.totalXP,...extra}));
+  }catch(e){}
+}
+
+// ─── UI HELPERS ──────────────────────────────────────────────────
+function el(tag,attrs={},children=[]){
+  const e=document.createElement(tag);
+  Object.entries(attrs).forEach(([k,v])=>{
+    if(k==="style"&&typeof v==="object")Object.assign(e.style,v);
+    else if(k.startsWith("on"))e.addEventListener(k.slice(2).toLowerCase(),v);
+    else if(k==="className")e.className=v;
+    else e.setAttribute(k,v);
+  });
+  children.forEach(c=>{if(c!=null&&c!==false){e.appendChild(typeof c==="string"?document.createTextNode(c):c);}});
+  return e;
+}
+
+function showToast(msg,color){
+  S.toast=msg;S.toastColor=color||"#a855f7";
+  if(S.toastTimer)clearTimeout(S.toastTimer);
+  S.toastTimer=setTimeout(()=>{S.toast=null;render();},3500);
+  render();
+}
+
+// ─── RENDER ──────────────────────────────────────────────────────
+function render(){
+  const app=document.getElementById("app");
+  app.innerHTML="";
+
+  const active=HABITS.filter(h=>h.day<=S.day);
+  const doneCount=active.filter(h=>S.checked[h.id]).length;
+  const xpAll=active.reduce((s,h)=>s+h.xp,0);
+  const pct=active.length?Math.round((doneCount/active.length)*100):0;
+  const streak=getStreak(S.history);
+  const phKey=getPhaseKey(S.day);
+  const phase=PHASES[phKey];
+  const C=phase.c;
+  const totalXPAll=HABITS.reduce((s,h)=>s+h.xp,0);
+
+  // ── Toast
+  if(S.toast){
+    app.appendChild(el("div",{className:"toast",style:{borderColor:S.toastColor,boxShadow:`0 0 28px ${S.toastColor}55`}},[S.toast]));
+  }
+
+  // ── Penalty modal
+  if(S.penaltyModal){
+    const m=el("div",{className:"modal-bg",onclick:(e)=>{if(e.target===e.currentTarget){S.penaltyModal=null;render();}}});
+    const box=el("div",{className:"modal",style:{border:"2px solid #ef4444",boxShadow:"0 0 60px #ef444466"}});
+    box.appendChild(el("div",{style:{fontSize:"52px",marginBottom:"10px"}},["😤"]));
+    box.appendChild(el("div",{style:{color:"#ef4444",fontSize:"11px",letterSpacing:"3px",marginBottom:"8px"}},["يوم فائت بدون إنجاز"]));
+    box.appendChild(el("div",{style:{fontSize:"18px",fontWeight:"900",marginBottom:"12px"}},[`-${S.penaltyModal.deduct} XP خُصمت`]));
+    box.appendChild(el("div",{style:{background:"#ef444415",border:"1px solid #ef444444",borderRadius:"12px",padding:"12px",marginBottom:"16px",textAlign:"right",fontSize:"12px",color:"#a1a1aa",lineHeight:"1.7"}},["الانضباط له ثمن والتقصير كذلك.","يوم كامل بدون إنجاز = خصم ٥٠ نقطة."]));
+    const btn=el("button",{style:{width:"100%",background:"linear-gradient(135deg,#ef4444,#dc2626)",border:"none",borderRadius:"12px",padding:"12px",color:"#fff",fontWeight:"800",fontSize:"14px"},onclick:()=>{S.penaltyModal=null;render();}},["فهمت — لن يتكرر 💪"]);
+    box.appendChild(btn);m.appendChild(box);app.appendChild(m);
+  }
+
+  // ── Celebrate modal
+  if(S.celebrate){
+    const m=el("div",{className:"modal-bg"});
+    const box=el("div",{className:"modal",style:{border:"2px solid #f59e0b",boxShadow:"0 0 80px #f59e0b66",maxWidth:"300px"}});
+    box.appendChild(el("div",{style:{fontSize:"52px",marginBottom:"10px"}},["🏆"]));
+    box.appendChild(el("div",{style:{fontSize:"19px",fontWeight:"900",marginBottom:"8px"}},["يوم كامل ١٠٠٪!"]));
+    box.appendChild(el("div",{style:{color:"#f59e0b",fontSize:"15px",fontWeight:"700"}},[`+${xpAll} XP`]));
+    box.appendChild(el("div",{style:{color:"#a1a1aa",fontSize:"12px",marginTop:"10px",lineHeight:"1.8"}},[`أقل من ٥٪ يكملون يومهم. أنت واحد منهم يا ${S.userName}. 🔥`]));
+    const btn=el("button",{style:{marginTop:"16px",background:C,border:"none",borderRadius:"12px",padding:"10px 28px",color:"#000",fontWeight:"800",fontSize:"14px"},onclick:()=>{S.celebrate=false;render();}},["🔥 يلا نكمل!"]);
+    box.appendChild(btn);m.appendChild(box);app.appendChild(m);
+  }
+
+  // ── Unlock modal
+  if(S.unlockModal){
+    const m=el("div",{className:"modal-bg"});
+    const box=el("div",{className:"modal",style:{border:`2px solid ${C}`,boxShadow:`0 0 60px ${C}66`}});
+    box.appendChild(el("div",{style:{fontSize:"42px",marginBottom:"8px"}},["🔓"]));
+    box.appendChild(el("div",{style:{color:C,fontSize:"11px",letterSpacing:"3px",marginBottom:"6px"}},["عادات جديدة مفتوحة!"]));
+    box.appendChild(el("div",{style:{fontSize:"15px",fontWeight:"800",marginBottom:"14px"}},[`اليوم ${S.day} — ${phase.l}`]));
+    const list=el("div",{style:{display:"flex",flexDirection:"column",gap:"6px",marginBottom:"16px"}});
+    S.unlockModal.forEach(hb=>{
+      const row=el("div",{style:{background:`${hb.color}15`,border:`1px solid ${hb.color}44`,borderRadius:"10px",padding:"8px 12px",textAlign:"right",display:"flex",alignItems:"center",gap:"8px"}});
+      row.appendChild(el("span",{style:{fontSize:"17px"}},[hb.icon]));
+      row.appendChild(el("span",{style:{fontWeight:"700",fontSize:"12px"}},[hb.title]));
+      list.appendChild(row);
+    });
+    box.appendChild(list);
+    const btn=el("button",{style:{width:"100%",background:C,border:"none",borderRadius:"12px",padding:"11px",color:"#000",fontWeight:"800",fontSize:"13px"},onclick:()=>{S.unlockModal=null;render();}},["جاهز! 💪"]);
+    box.appendChild(btn);m.appendChild(box);app.appendChild(m);
+  }
+
+  // ── NAME SCREEN
+  if(!S.userName){
+    app.style.display="flex";app.style.alignItems="center";app.style.justifyContent="center";app.style.minHeight="100vh";
+    const wrap=el("div",{style:{maxWidth:"360px",width:"100%",textAlign:"center",position:"relative",zIndex:"1"}});
+    wrap.appendChild(el("div",{style:{fontSize:"60px",marginBottom:"12px"}},["🔥"]));
+    wrap.appendChild(el("div",{style:{fontSize:"11px",letterSpacing:"4px",color:"#71717a",marginBottom:"6px"}},["DISCIPLINE CHALLENGE"]));
+    wrap.appendChild(el("h1",{style:{fontSize:"24px",fontWeight:"900",margin:"0 0 8px",background:"linear-gradient(135deg,#fff,#a855f7)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}},["تحدي الـ ١٤ يوم للانضباط"]));
+    wrap.appendChild(el("p",{style:{color:"#71717a",fontSize:"13px",lineHeight:"1.8",marginBottom:"28px"}},["اللي ما يرتب نفسه الحياة ترتبه على مزاجها 🔥"]));
+    const card=el("div",{style:{background:"#18181b",border:"1px solid #27272a",borderRadius:"18px",padding:"26px 22px"}});
+    card.appendChild(el("div",{style:{fontSize:"14px",fontWeight:"700",marginBottom:"14px",color:"#a1a1aa"}},["وش اسمك؟"]));
+    const inp=el("input",{type:"text",maxlength:"20",placeholder:"اكتب اسمك...",style:{width:"100%",background:"#27272a",border:"1px solid #3f3f46",borderRadius:"12px",padding:"12px 16px",color:"#fff",fontSize:"15px",textAlign:"right",marginBottom:"12px",display:"block",outline:"none"}});
+    inp.value=S.nameInput;
+    inp.addEventListener("input",e=>S.nameInput=e.target.value);
+    inp.addEventListener("keydown",e=>{if(e.key==="Enter")submitName();});
+    card.appendChild(inp);
+    const btn=el("button",{style:{width:"100%",background:"linear-gradient(135deg,#a855f7,#8b5cf6)",border:"none",borderRadius:"12px",padding:"13px",color:"#fff",fontWeight:"800",fontSize:"15px"},onclick:submitName},["ابدأ التحدي 🔥"]);
+    card.appendChild(btn);wrap.appendChild(card);app.appendChild(wrap);
+    setTimeout(()=>inp.focus(),100);
+    return;
+  }
+
+  app.style.display="block";app.style.minHeight="";app.style.alignItems="";app.style.justifyContent="";
+
+  // ── HEADER
+  const hdr=el("div",{style:{textAlign:"center",padding:"16px 0 10px"}});
+  hdr.appendChild(el("div",{style:{fontSize:"10px",letterSpacing:"3px",color:"#71717a",marginBottom:"4px"}},["DISCIPLINE CHALLENGE"]));
+  hdr.appendChild(el("h1",{style:{fontSize:"20px",fontWeight:"900",margin:"0",background:`linear-gradient(135deg,#fff,${C})`,WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}},["تحدي الـ ١٤ يوم"]));
+  hdr.appendChild(el("div",{style:{color:"#71717a",fontSize:"12px",marginTop:"4px"}},[`${getArabicDay()} — اليوم ${S.day}/١٤ | يا ${S.userName} 👋`]));
+  app.appendChild(hdr);
+
+  // ── XP BAR
+  const xpBar=el("div",{style:{background:"#18181b",border:"1px solid #27272a",borderRadius:"10px",padding:"8px 14px",marginBottom:"12px"}});
+  const xbTop=el("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:"5px"}});
+  xbTop.appendChild(el("span",{style:{fontSize:"11px",color:"#71717a"}},[`إجمالي التحدي ${Math.min(100,Math.round((S.totalXP/totalXPAll)*100))}٪`]));
+  xbTop.appendChild(el("span",{style:{fontSize:"11px",color:C,fontWeight:"700"}},[`${S.totalXP} / ${totalXPAll} XP`]));
+  xpBar.appendChild(xbTop);
+  const track=el("div",{className:"progress-track"});
+  const fill=el("div",{className:"progress-fill",style:{background:`linear-gradient(90deg,${C},#a855f7)`,width:`${Math.min(100,Math.round((S.totalXP/totalXPAll)*100))}%`}});
+  track.appendChild(fill);xpBar.appendChild(track);app.appendChild(xpBar);
+
+  // ── TABS
+  const tabsEl=el("div",{className:"tabs"});
+  ["اليوم","تقرير","عرض","⚙️"].forEach(t=>{
+    const btn=el("button",{className:`tab-btn${S.tab===t?" active":""}`,style:{background:S.tab===t?C:"transparent",fontSize:t==="⚙️"?"16px":"12px"},onclick:()=>{S.tab=t;render();}},[ t]);
+    tabsEl.appendChild(btn);
+  });
+  app.appendChild(tabsEl);
+
+  // ════════════════════════════════════════════
+  if(S.tab==="اليوم") renderToday(app,active,doneCount,xpAll,pct,streak,C,phase);
+  else if(S.tab==="تقرير") renderReport(app,active,doneCount,pct,streak,C,totalXPAll);
+  else if(S.tab==="عرض") renderBadge(app,active,doneCount,pct,streak,C,totalXPAll);
+  else if(S.tab==="⚙️") renderSettings(app,C);
+
+  app.appendChild(el("div",{style:{textAlign:"center",padding:"14px 0",color:"#3f3f46",fontSize:"11px"}},["محفوظ في متصفحك تلقائياً ⚡"]));
+}
+
+// ─── TODAY TAB ───────────────────────────────────────────────────
+function renderToday(app,active,doneCount,xpAll,pct,streak,C,phase){
+  const totalXPAll=HABITS.reduce((s,h)=>s+h.xp,0);
+
+  // Stats card
+  const sc=el("div",{style:{background:"#18181b",border:`1px solid ${pct===100?"#10b981":"#27272a"}`,borderRadius:"18px",padding:"14px 16px",marginBottom:"12px",boxShadow:pct===100?"0 0 25px #10b98133":"",transition:"all .4s"}});
+  const srow=el("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"10px"}});
+  const stats=el("div",{style:{display:"flex",gap:"14px"}});
+  [{v:`${doneCount}/${active.length}`,l:"مهام",c:C},{v:S.totalXP,l:"XP",c:"#f59e0b"},{v:`${streak}🔥`,l:"streak",c:"#ef4444"}].forEach(s=>{
+    const sb=el("div",{className:"stat-box"});
+    sb.appendChild(el("div",{className:"stat-val",style:{color:s.c}},[String(s.v)]));
+    sb.appendChild(el("div",{className:"stat-lbl"},[s.l]));
+    stats.appendChild(sb);
+  });
+  srow.appendChild(stats);
+  // Ring
+  const ring=el("div",{className:"ring",style:{background:`conic-gradient(${pct===100?"#10b981":C} ${pct}%,#27272a ${pct}%)`}});
+  const ri=el("div",{className:"ring-inner",style:{color:pct===100?"#10b981":"#fff"}},[`${pct}%`]);
+  ring.appendChild(ri);srow.appendChild(ring);sc.appendChild(srow);
+  const pt=el("div",{className:"progress-track"});
+  pt.appendChild(el("div",{className:"progress-fill",style:{background:pct===100?"#10b981":C,width:`${pct}%`}}));
+  sc.appendChild(pt);app.appendChild(sc);
+
+  // Custom task
+  const taskCard=el("div",{style:{background:"#18181b",border:`1px solid ${S.dailyDone?"#10b981":"#10b98155"}`,borderRadius:"14px",padding:"13px",marginBottom:"12px",transition:"all .3s"}});
+  const th=el("div",{style:{display:"flex",alignItems:"center",gap:"8px",marginBottom:S.dailyTask?"10px":"8px"}});
+  th.appendChild(el("span",{style:{fontSize:"16px"}},["🎯"]));
+  th.appendChild(el("span",{style:{fontWeight:"700",fontSize:"13px",color:C,flex:"1"}},["مهمتك الإضافية اليوم"]));
+  if(S.dailyDone) th.appendChild(el("span",{style:{background:"#10b981",color:"#000",fontSize:"9px",fontWeight:"800",padding:"2px 6px",borderRadius:"100px"}},{},[ "+٣٠ XP ✓"]));
+  taskCard.appendChild(th);
+  if(S.dailyTask){
+    const tr=el("div",{style:{display:"flex",alignItems:"center",gap:"10px"}});
+    const cb=el("button",{style:{width:"28px",height:"28px",borderRadius:"8px",border:"none",background:S.dailyDone?"#10b981":"#2a2a2e",color:"#fff",fontSize:"14px",flexShrink:"0"},onclick:toggleTask},[S.dailyDone?"✓":"○"]);
+    tr.appendChild(cb);
+    tr.appendChild(el("div",{style:{flex:"1",fontSize:"13px",color:S.dailyDone?"#71717a":"#f4f4f5",textDecoration:S.dailyDone?"line-through":"none",lineHeight:"1.4"}},[S.dailyTask]));
+    const clr=el("button",{style:{background:"transparent",border:"none",color:"#71717a",fontSize:"18px",padding:"0 4px"},onclick:clearTask},["×"]);
+    tr.appendChild(clr);taskCard.appendChild(tr);
+  } else {
+    const ir=el("div",{style:{display:"flex",gap:"8px"}});
+    const inp=el("input",{type:"text",placeholder:"أضف مهمة إضافية ليومك...",style:{flex:"1",background:"#27272a",border:"1px solid #3f3f46",borderRadius:"10px",padding:"8px 12px",color:"#fff",fontSize:"12px",outline:"none"}});
+    inp.value=S.dailyInput;
+    inp.addEventListener("input",e=>S.dailyInput=e.target.value);
+    inp.addEventListener("keydown",e=>{if(e.key==="Enter")setTask();});
+    ir.appendChild(inp);
+    const btn=el("button",{style:{background:C,border:"none",borderRadius:"10px",padding:"8px 14px",color:"#000",fontWeight:"800",fontSize:"12px"},onclick:setTask},["حط"]);
+    ir.appendChild(btn);taskCard.appendChild(ir);
+  }
+  app.appendChild(taskCard);
+
+  // Phase badge
+  const pb=el("div",{style:{background:`${C}12`,border:`1px solid ${C}44`,borderRadius:"12px",padding:"8px 14px",marginBottom:"12px",display:"flex",justifyContent:"space-between",alignItems:"center"}});
+  pb.appendChild(el("div",{style:{color:C,fontSize:"12px",fontWeight:"700"}},[`${active.length} عادة نشطة`]));
+  const pbd=el("div",{style:{textAlign:"right"}});
+  pbd.appendChild(el("div",{style:{fontWeight:"700",fontSize:"13px",color:C}},[phase.l]));
+  pbd.appendChild(el("div",{style:{fontSize:"11px",color:"#71717a"}},[`أيام ${phase.d}`]));
+  pb.appendChild(pbd);app.appendChild(pb);
+
+  // Habits
+  active.forEach(habit=>{
+    const isDone=!!S.checked[habit.id];
+    const isNew=habit.day===S.day;
+    const isOpen=S.openHabit===habit.id;
+    const card=el("div",{className:"habit-card",style:{background:isDone?`${habit.color}10`:"#18181b",border:`1px solid ${isDone?habit.color:isNew?habit.color+"55":"#27272a"}`,boxShadow:isDone?`0 0 10px ${habit.color}20`:""}});
+    const row=el("div",{className:"habit-row"});
+    const chk=el("button",{className:"check-btn",style:{background:isDone?habit.color:"#2a2a2e",boxShadow:isDone?`0 0 10px ${habit.color}66`:""},onclick:()=>toggleHabit(habit,active)},[isDone?"✓":habit.icon]);
+    row.appendChild(chk);
+    const info=el("div",{style:{flex:"1",cursor:"pointer"},onclick:()=>{S.openHabit=isOpen?null:habit.id;render();}});
+    const titleRow=el("div",{style:{display:"flex",alignItems:"center",gap:"6px",flexWrap:"wrap"}});
+    titleRow.appendChild(el("span",{className:"habit-title",style:{color:isDone?"#71717a":"#f4f4f5",textDecoration:isDone?"line-through":"none"}},[habit.title]));
+    if(isNew) titleRow.appendChild(el("span",{style:{background:C,color:"#000",fontSize:"9px",fontWeight:"800",padding:"1px 6px",borderRadius:"100px"}},["جديد"]));
+    info.appendChild(titleRow);
+    info.appendChild(el("div",{className:"habit-hint"},[isOpen?"▲ إغلاق":"▼ كيف أنجزها؟"]));
+    row.appendChild(info);
+    row.appendChild(el("div",{className:"xp-badge",style:{background:isDone?habit.color+"33":"#27272a",color:isDone?habit.color:"#71717a"}},[`+${habit.xp}`]));
+    card.appendChild(row);
+    if(isOpen){
+      const panel=el("div",{className:"steps-panel"});
+      panel.appendChild(el("div",{style:{background:"#2a2a2e",height:"1px",marginBottom:"12px"}}));
+      habit.steps.forEach((step,i)=>{
+        const sr=el("div",{className:"step-row"});
+        sr.appendChild(el("div",{className:"step-num",style:{background:`${habit.color}20`,border:`1px solid ${habit.color}44`,color:habit.color}},[String(i+1)]));
+        sr.appendChild(el("div",{className:"step-text"},[step]));
+        panel.appendChild(sr);
+      });
+      if(!isDone){
+        const db=el("button",{className:"done-btn",style:{background:`linear-gradient(135deg,${habit.color},${habit.color}bb)`},onclick:()=>{toggleHabit(habit,active);S.openHabit=null;render();}},["✅ أنجزت هذي المهمة!"]);
+        panel.appendChild(db);
+      }
+      card.appendChild(panel);
+    }
+    app.appendChild(card);
+  });
+
+  // Advance button
+  if(S.day<14){
+    if(pct<100){
+      const warn=el("div",{style:{background:"#18181b",border:"1px solid #3f3f46",borderRadius:"12px",padding:"10px 14px",marginBottom:"10px",display:"flex",alignItems:"center",gap:"10px"}});
+      warn.appendChild(el("div",{style:{fontSize:"16px"}},["⚠️"]));
+      const wd=el("div");
+      const missed=active.filter(h=>!S.checked[h.id]);
+      const deduct=missed.reduce((s,h)=>s+h.xp,0);
+      wd.appendChild(el("div",{style:{fontSize:"12px",color:"#ef4444",fontWeight:"700"}},[`${missed.length} مهمة ناقصة = -${deduct} XP خصم عند التجاوز`]));
+      wd.appendChild(el("div",{style:{fontSize:"11px",color:"#71717a",marginTop:"2px"}},["تقدر تكمل الآن أو تنتقل وتتحمل الخصم"]));
+      warn.appendChild(wd);app.appendChild(warn);
+    }
+    const missed=active.filter(h=>!S.checked[h.id]);
+    const deduct=missed.reduce((s,h)=>s+h.xp,0);
+    const advBtn=el("button",{style:{width:"100%",background:pct===100?`linear-gradient(135deg,${C},#a855f7)`:"#1c1c1c",border:`1px solid ${pct===100?C:"#3f3f46"}`,borderRadius:"14px",padding:"14px",color:pct===100?"#fff":"#71717a",fontWeight:"800",fontSize:"14px",boxShadow:pct===100?`0 0 28px ${C}44`:"",animation:pct===100?"pulse 2s infinite":""},onclick:()=>advanceDay(active,C)},[ pct===100?`🚀 انتهيت — اليوم ${S.day+1} من ١٤`:`⏭️ تجاوز اليوم ${S.day} (خصم -${deduct} XP)`]);
+    app.appendChild(advBtn);
+  }
+  if(S.day>=14&&pct===100){
+    const fin=el("div",{style:{background:"linear-gradient(135deg,#f59e0b22,#10b98122)",border:"1px solid #f59e0b",borderRadius:"14px",padding:"20px",textAlign:"center"}});
+    fin.appendChild(el("div",{style:{fontSize:"40px",marginBottom:"8px"}},["🏆"]));
+    fin.appendChild(el("div",{style:{fontWeight:"900",fontSize:"18px",marginBottom:"6px"}},[`أكملت تحدي الـ ١٤ يوم يا ${S.userName}!`]));
+    fin.appendChild(el("div",{style:{color:"#a1a1aa",fontSize:"13px",lineHeight:"1.7"}},["١٤ يوم من الانضباط. أنت لست نفس الشخص اللي بدأ."]));
+    app.appendChild(fin);
+  }
+}
+
+// ─── REPORT TAB ──────────────────────────────────────────────────
+function renderReport(app,active,doneCount,pct,streak,C,totalXPAll){
+  // Chart
+  const chart=el("div",{style:{background:"#18181b",border:"1px solid #27272a",borderRadius:"18px",padding:"16px",marginBottom:"12px"}});
+  chart.appendChild(el("div",{style:{fontSize:"12px",color:"#71717a",marginBottom:"12px"}},["آخر ٧ أيام"]));
+  const bars=el("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-end",gap:"4px"}});
+  const days7=Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-(6-i));const k=d.toISOString().slice(0,10);return{l:["أح","إث","ثل","أر","خم","جم","سب"][d.getDay()],cnt:S.history[k]?.length||0,today:k===todayKey()};});
+  days7.forEach(d=>{
+    const col=el("div",{style:{flex:"1",textAlign:"center"}});
+    col.appendChild(el("div",{style:{background:d.cnt>=active.length&&d.cnt>0?"#10b981":d.cnt>0?C+"55":"#27272a",borderRadius:"6px",marginBottom:"5px",height:`${Math.max(14,(d.cnt/Math.max(active.length,1))*54)}px`,border:d.today?`1px solid ${C}`:"",transition:"all .3s"}}));
+    col.appendChild(el("div",{style:{fontSize:"10px",color:d.today?C:"#71717a",fontWeight:d.today?"700":"400"}},[d.l]));
+    col.appendChild(el("div",{style:{fontSize:"10px",color:"#52525b"}},[d.cnt||"—"]));
+    bars.appendChild(col);
+  });
+  chart.appendChild(bars);app.appendChild(chart);
+
+  // Stats grid
+  const grid=el("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"10px",marginBottom:"12px"}});
+  [{label:"اليوم",value:`${S.day}/١٤`,color:C},{label:"Streak",value:`${streak}🔥`,color:"#ef4444"},{label:"XP الكلي",value:S.totalXP,color:"#f59e0b"},{label:"إنجاز كلي",value:`${Math.min(100,Math.round((S.totalXP/totalXPAll)*100))}٪`,color:"#10b981"}].forEach(s=>{
+    const b=el("div",{style:{background:"#18181b",border:"1px solid #27272a",borderRadius:"14px",padding:"13px 15px"}});
+    b.appendChild(el("div",{style:{fontSize:"20px",fontWeight:"900",color:s.color}},[String(s.value)]));
+    b.appendChild(el("div",{style:{fontSize:"11px",color:"#71717a",marginTop:"2px"}},[s.label]));
+    grid.appendChild(b);
+  });
+  app.appendChild(grid);
+
+  // Day map
+  const dm=el("div",{style:{background:"#18181b",border:"1px solid #27272a",borderRadius:"16px",padding:"14px"}});
+  dm.appendChild(el("div",{style:{fontSize:"12px",color:"#71717a",marginBottom:"10px"}},["مسار الـ ١٤ يوم"]));
+  const dots=el("div",{style:{display:"flex",gap:"5px",flexWrap:"wrap"}});
+  for(let i=1;i<=14;i++){
+    const done=i<S.day,curr=i===S.day;
+    const pc=Object.entries(PHASES).filter(([k])=>parseInt(k)<=i).slice(-1)[0]?.[1]?.c||C;
+    const d=el("div",{style:{width:"34px",height:"34px",borderRadius:"8px",background:curr?pc:done?pc+"44":"#1f1f23",display:"flex",alignItems:"center",justifyContent:"center",fontSize:done?"16px":"12px",fontWeight:"800",color:curr?"#000":done?pc:"#3f3f46",border:curr?`1px solid ${pc}`:"",transition:"all .3s"}},[done?"✓":String(i)]);
+    dots.appendChild(d);
+  }
+  dm.appendChild(dots);app.appendChild(dm);
+}
+
+// ─── BADGE TAB ───────────────────────────────────────────────────
+function renderBadge(app,active,doneCount,pct,streak,C,totalXPAll){
+  const wrap=el("div",{style:{textAlign:"center",padding:"8px 0 20px"}});
+
+  if(pct===100){
+    // Completed badge
+    const ring=el("div",{style:{position:"relative",display:"inline-flex",alignItems:"center",justifyContent:"center",width:"180px",height:"180px",marginBottom:"20px"}});
+    const outerRing=el("div",{style:{position:"absolute",inset:"0",borderRadius:"50%",background:`conic-gradient(${C},#a855f7,#f59e0b,${C})`,animation:"spin 8s linear infinite"}});
+    const innerBg=el("div",{style:{position:"absolute",inset:"4px",borderRadius:"50%",background:"#09090b"}});
+    const content=el("div",{style:{position:"absolute",inset:"0",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}});
+    content.appendChild(el("div",{style:{fontSize:"60px",lineHeight:"1",marginBottom:"4px"}},["✅"]));
+    content.appendChild(el("div",{style:{fontSize:"13px",fontWeight:"800",color:C,letterSpacing:"1px"}},["أنجزت اليوم"]));
+    ring.appendChild(outerRing);ring.appendChild(innerBg);ring.appendChild(content);
+    wrap.appendChild(ring);
+    wrap.appendChild(el("h2",{style:{fontSize:"22px",fontWeight:"900",marginBottom:"8px",background:`linear-gradient(135deg,${C},#a855f7)`,WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}},[`يا ${S.userName}، أنت تستاهل! 🔥`]));
+    wrap.appendChild(el("p",{style:{color:"#a1a1aa",fontSize:"13px",lineHeight:"1.8",maxWidth:"300px",margin:"0 auto 20px"}},["كل مهمة أنجزتها اليوم هي لبنة في بناء نفسك. استمر."]));
+    // Stats
+    const statsRow=el("div",{style:{display:"flex",justifyContent:"center",gap:"10px",flexWrap:"wrap",marginBottom:"20px"}});
+    [{v:`${S.day}/١٤`,l:"اليوم",c:C},{v:String(S.totalXP),l:"XP",c:"#f59e0b"},{v:`${streak}🔥`,l:"Streak",c:"#ef4444"},{v:`${doneCount}/${active.length}`,l:"مهام",c:"#10b981"}].forEach(s=>{
+      const b=el("div",{style:{background:`${s.c}15`,border:`1px solid ${s.c}44`,borderRadius:"14px",padding:"12px 16px",textAlign:"center",minWidth:"70px"}});
+      b.appendChild(el("div",{style:{fontSize:"18px",fontWeight:"900",color:s.c}},[s.v]));
+      b.appendChild(el("div",{style:{fontSize:"10px",color:"#71717a",marginTop:"3px"}},[s.l]));
+      statsRow.appendChild(b);
+    });
+    wrap.appendChild(statsRow);
+    const shareBtn=el("button",{style:{background:`linear-gradient(135deg,${C},#a855f7)`,border:"none",borderRadius:"14px",padding:"14px 32px",color:"#fff",fontWeight:"800",fontSize:"15px",boxShadow:`0 0 30px ${C}55`},onclick:()=>{
+      const txt=`✅ أنجزت اليوم ${S.day} من تحدي الانضباط ١٤ يوم!\n⭐ ${S.totalXP} XP | 🔥 ${streak} يوم streak | ${Math.min(100,Math.round((S.totalXP/totalXPAll)*100))}٪ مكتمل\n\nاللي ما يرتب نفسه الحياة ترتبه على مزاجها 💪`;
+      if(navigator.share)navigator.share({text:txt}).catch(()=>{});
+      else if(navigator.clipboard)navigator.clipboard.writeText(txt).then(()=>showToast("تم النسخ! 📋",C));
+    }},["📤 شارك إنجازك"]);
+    wrap.appendChild(shareBtn);
+  } else {
+    // In progress badge
+    const ring=el("div",{style:{position:"relative",display:"inline-flex",alignItems:"center",justifyContent:"center",width:"180px",height:"180px",marginBottom:"20px"}});
+    const outerRing=el("div",{style:{position:"absolute",inset:"0",borderRadius:"50%",background:`conic-gradient(${C} ${pct}%,#27272a ${pct}%)`}});
+    const innerBg=el("div",{style:{position:"absolute",inset:"4px",borderRadius:"50%",background:"#09090b"}});
+    const content=el("div",{style:{position:"absolute",inset:"0",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}});
+    const icon=pct===0?"😴":pct<30?"🌱":pct<60?"⚡":pct<90?"🔥":"💪";
+    content.appendChild(el("div",{style:{fontSize:"42px",lineHeight:"1",marginBottom:"4px"}},[icon]));
+    content.appendChild(el("div",{style:{fontSize:"24px",fontWeight:"900",color:C}},[`${pct}٪`]));
+    content.appendChild(el("div",{style:{fontSize:"11px",color:"#71717a"}},[ `${doneCount}/${active.length} مهمة`]));
+    ring.appendChild(outerRing);ring.appendChild(innerBg);ring.appendChild(content);
+    wrap.appendChild(ring);
+
+    const msg=pct===0?`ابدأ يا ${S.userName}! 💪`:pct<30?`بدأت الرحلة يا ${S.userName} 🌱`:pct<60?`في المنتصف يا ${S.userName} ⚡`:pct<90?`قريب جداً يا ${S.userName} 🔥`:`خطوة وتخلص يا ${S.userName}! 💪`;
+    wrap.appendChild(el("h2",{style:{fontSize:"19px",fontWeight:"900",marginBottom:"8px",color:"#f4f4f5"}},[msg]));
+    const sub=pct===0?"اليوم يبدأ بخطوة واحدة. اضغط على أي مهمة وابدأ الآن.":pct<60?`باقي ${active.length-doneCount} مهام — كل واحدة تعطيك XP.`:`فضل ${active.length-doneCount} مهام بس. لا توقف الآن.`;
+    wrap.appendChild(el("p",{style:{color:"#a1a1aa",fontSize:"13px",lineHeight:"1.8",maxWidth:"300px",margin:"0 auto 16px"}},[sub]));
+
+    // Remaining tasks
+    const remaining=active.filter(h=>!S.checked[h.id]);
+    if(remaining.length>0){
+      const list=el("div",{style:{background:"#18181b",border:`1px solid ${C}33`,borderRadius:"16px",padding:"14px",marginBottom:"16px",textAlign:"right"}});
+      list.appendChild(el("div",{style:{fontSize:"12px",color:"#71717a",marginBottom:"10px",textAlign:"center"}},["المهام الباقية اليوم"]));
+      remaining.forEach(habit=>{
+        const row=el("div",{style:{display:"flex",alignItems:"center",gap:"10px",padding:"8px 0",borderBottom:"1px solid #27272a33"}});
+        row.appendChild(el("span",{style:{fontSize:"18px",flexShrink:"0"}},[habit.icon]));
+        row.appendChild(el("span",{style:{flex:"1",fontSize:"13px",color:"#c4c4cc"}},[habit.title]));
+        row.appendChild(el("span",{style:{color:C,fontSize:"11px",fontWeight:"700",flexShrink:"0"}},[`+${habit.xp}`]));
+        list.appendChild(row);
+      });
+      wrap.appendChild(list);
+    }
+    const goBtn=el("button",{style:{background:`linear-gradient(135deg,${C},#a855f7)`,border:"none",borderRadius:"14px",padding:"14px 28px",color:"#fff",fontWeight:"800",fontSize:"15px",boxShadow:`0 0 30px ${C}44`},onclick:()=>{S.tab="اليوم";render();}},[ `روح أنجز ${active.length-doneCount} مهام ←`]);
+    wrap.appendChild(goBtn);
+  }
+  app.appendChild(wrap);
+
+  // Day map
+  const dm=el("div",{style:{background:"#18181b",border:"1px solid #27272a",borderRadius:"16px",padding:"14px",marginTop:"4px"}});
+  dm.appendChild(el("div",{style:{fontSize:"12px",color:"#71717a",marginBottom:"10px",textAlign:"center"}},["مسار التحدي"]));
+  const dots=el("div",{style:{display:"flex",gap:"5px",flexWrap:"wrap",justifyContent:"center"}});
+  for(let i=1;i<=14;i++){
+    const done=i<S.day,curr=i===S.day;
+    const pc=Object.entries(PHASES).filter(([k])=>parseInt(k)<=i).slice(-1)[0]?.[1]?.c||C;
+    const d=el("div",{style:{width:"36px",height:"36px",borderRadius:"9px",background:done?pc:curr?pc+"33":"#1f1f23",display:"flex",alignItems:"center",justifyContent:"center",fontSize:done?"16px":"12px",fontWeight:"800",color:curr?pc:done?"#fff":"#3f3f46",border:curr?`2px solid ${pc}`:"",transition:"all .3s",boxShadow:done?`0 0 8px ${pc}66`:""}},[ done?"✓":String(i)]);
+    dots.appendChild(d);
+  }
+  dm.appendChild(dots);app.appendChild(dm);
+}
+
+// ─── SETTINGS TAB ────────────────────────────────────────────────
+function renderSettings(app,C){
+  const nc=el("div",{style:{background:"#18181b",border:"1px solid #27272a",borderRadius:"16px",padding:"16px",marginBottom:"12px"}});
+  nc.appendChild(el("div",{style:{display:"flex",alignItems:"center",gap:"8px",marginBottom:"10px"}},[el("span",{},[" ✏️"]),el("span",{style:{fontWeight:"700",fontSize:"14px"}},["تغيير الاسم"])]));
+  const row=el("div",{style:{display:"flex",gap:"8px"}});
+  const inp=el("input",{type:"text",id:"nameChg",style:{flex:"1",background:"#27272a",border:"1px solid #3f3f46",borderRadius:"10px",padding:"9px 12px",color:"#fff",fontSize:"13px",outline:"none"}});
+  inp.value=S.userName;
+  row.appendChild(inp);
+  row.appendChild(el("button",{style:{background:C,border:"none",borderRadius:"10px",padding:"9px 16px",color:"#000",fontWeight:"800",fontSize:"13px"},onclick:()=>{const v=document.getElementById("nameChg")?.value?.trim();if(v){S.userName=v;saveData();showToast("تم حفظ الاسم ✅",C);}}},["حفظ"]));
+  nc.appendChild(row);app.appendChild(nc);
+
+  const info=el("div",{style:{background:"#18181b",border:"1px solid #27272a",borderRadius:"16px",padding:"16px",marginBottom:"12px"}});
+  info.appendChild(el("div",{style:{fontSize:"13px",color:"#71717a",lineHeight:"1.8"}},[ `يا ${S.userName} • اليوم ${S.day}/١٤ • ${S.totalXP} XP • Streak: ${getStreak(S.history)} يوم`]));
+  app.appendChild(info);
+
+  const rst=el("button",{style:{width:"100%",background:"transparent",border:"1px solid #ef444433",borderRadius:"12px",padding:"12px",color:"#ef4444",fontWeight:"700",fontSize:"13px"},onclick:()=>{if(confirm("مسح كل التقدم؟ هذا لا يمكن التراجع عنه!")){localStorage.removeItem(LS_KEY);location.reload();}}},["🗑️ مسح كل التقدم"]);
+  app.appendChild(rst);
+}
+
+// ─── ACTIONS ─────────────────────────────────────────────────────
+function submitName(){
+  const n=S.nameInput.trim();if(!n)return;
+  S.userName=n;saveData();render();
+}
+
+function toggleHabit(habit,active){
+  const now=!S.checked[habit.id];
+  S.checked[habit.id]=now;
+  const ids=Object.keys(S.checked).filter(k=>S.checked[k]);
+  const hist={...S.history,[todayKey()]:ids};
+  S.history=hist;
+  S.totalXP=now?S.totalXP+habit.xp:Math.max(0,S.totalXP-habit.xp);
+  saveData();
+  if(now){
+    showToast(habit.praise,"#10b981");
+    const doneNow=active.filter(h=>S.checked[h.id]).length;
+    if(doneNow===active.length){setTimeout(()=>{S.celebrate=true;render();setTimeout(()=>{S.celebrate=false;render();},5000);},400);}
+  }
+}
+
+function advanceDay(active,C){
+  const missed=active.filter(h=>!S.checked[h.id]);
+  const deduct=missed.reduce((s,h)=>s+h.xp,0);
+  if(deduct>0){S.totalXP=Math.max(0,S.totalXP-deduct);S.penaltyModal={deduct,missed:missed.length,advance:true};}
+  const next=S.day+1;
+  const ul=HABITS.filter(h=>h.day===next);
+  S.day=next;S.checked={};S.dailyTask="";S.dailyInput="";S.dailyDone=false;
+  saveData();
+  if(ul.length){S.unlockModal=ul;setTimeout(()=>{S.unlockModal=null;render();},6000);}
+  render();
+}
+
+function setTask(){
+  const t=S.dailyInput.trim();if(!t)return;
+  S.dailyTask=t;
+  const prev=JSON.parse(localStorage.getItem(LS_KEY)||"{}");
+  const dt={...(prev.dailyTasks||{}),[todayKey()]:{task:t,done:S.dailyDone}};
+  saveData();localStorage.setItem(LS_KEY,JSON.stringify({...JSON.parse(localStorage.getItem(LS_KEY)||"{}"),dailyTasks:dt}));
+  render();
+}
+
+function toggleTask(){
+  S.dailyDone=!S.dailyDone;
+  S.totalXP=S.dailyDone?S.totalXP+30:Math.max(0,S.totalXP-30);
+  const prev=JSON.parse(localStorage.getItem(LS_KEY)||"{}");
+  const dt={...(prev.dailyTasks||{}),[todayKey()]:{task:S.dailyTask,done:S.dailyDone}};
+  saveData();localStorage.setItem(LS_KEY,JSON.stringify({...JSON.parse(localStorage.getItem(LS_KEY)||"{}"),dailyTasks:dt}));
+  if(S.dailyDone)showToast("✅ مهمتك الإضافية أنجزت! +٣٠ XP!","#10b981");
+  render();
+}
+
+function clearTask(){
+  if(S.dailyDone){S.totalXP=Math.max(0,S.totalXP-30);}
+  S.dailyTask="";S.dailyInput="";S.dailyDone=false;
+  saveData();render();
+}
+
+// ─── INIT ────────────────────────────────────────────────────────
+loadData();
+render();
+</script>
+
+</body>
+</html>
