@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>خريطة كنز Poole 🗺️</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&family=Cinzel:wght@700&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+background: #1a0e05;
+font-family: ‘Tajawal’, sans-serif;
+min-height: 100vh;
+overflow-x: hidden;
+}
+
+.page {
+max-width: 520px;
+margin: 0 auto;
+padding: 20px 16px 80px;
+}
+
+/* ═══ TITLE ═══ */
+.title-wrap {
+text-align: center;
+padding: 24px 0 10px;
+animation: fadeIn 0.8s ease both;
+}
+.title-wrap .scroll-icon {
+font-size: 36px;
+display: block;
+animation: sway 4s ease-in-out infinite;
+}
+@keyframes sway { 0%,100%{transform:rotate(-5deg)} 50%{transform:rotate(5deg)} }
+.title-wrap h1 {
+font-family: ‘Cinzel’, serif;
+font-size: 20px;
+color: #d4a843;
+letter-spacing: 3px;
+text-shadow: 0 0 20px rgba(212,168,67,0.5);
+margin: 6px 0 4px;
+}
+.title-wrap p { font-size: 11px; color: #a07840; letter-spacing: 2px; }
+
+/* ═══ MAP ═══ */
+.map-container {
+position: relative;
+margin: 16px 0;
+border-radius: 18px;
+overflow: hidden;
+border: 3px solid #8b6020;
+box-shadow: 0 0 0 5px rgba(139,96,32,0.2), 0 16px 50px rgba(0,0,0,0.6);
+animation: fadeIn 0.8s 0.2s ease both;
+}
+.map-svg { width:100%; display:block; }
+
+.pin { cursor:pointer; transition:transform 0.2s; transform-origin:center bottom; }
+.pin:hover { transform:scale(1.2); }
+.pin:active { transform:scale(0.95); }
+
+.hint {
+text-align:center; font-size:12px; color:#6b4f30;
+margin: 6px 0 14px;
+animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100%{opacity:0.5} 50%{opacity:1} }
+
+/* ═══ SECTION DIVIDER ═══ */
+.section-sep {
+display: flex;
+align-items: center;
+gap: 12px;
+margin: 28px 0 18px;
+}
+.section-sep .line {
+flex:1;
+height: 1px;
+background: linear-gradient(to left, transparent, #8b6020);
+}
+.section-sep .line.r {
+background: linear-gradient(to right, transparent, #8b6020);
+}
+.section-sep span {
+font-size: 11px;
+color: #d4a843;
+letter-spacing: 2px;
+text-transform: uppercase;
+white-space: nowrap;
+}
+
+/* ═══ PROGRESS ═══ */
+.progress-wrap {
+background: rgba(255,255,255,0.06);
+border-radius: 50px;
+height: 6px;
+margin-bottom: 6px;
+overflow: hidden;
+}
+.progress-bar {
+height:100%;
+background: linear-gradient(to left, #d4a843, #8b6020);
+border-radius:50px;
+transition: width 0.5s cubic-bezier(.4,0,.2,1);
+width:0%;
+}
+.progress-text {
+font-size:11px; color:#8b6020;
+text-align:center; margin-bottom:16px;
+}
+
+/* ═══ CHECK ITEMS ═══ */
+.check-item {
+display:flex;
+align-items:flex-start;
+gap:12px;
+padding: 13px 14px;
+border-radius: 14px;
+margin-bottom: 7px;
+cursor: pointer;
+border: 1px solid rgba(139,96,32,0.25);
+background: rgba(212,168,67,0.04);
+transition: all 0.25s ease;
+-webkit-tap-highlight-color: transparent;
+user-select: none;
+animation: fadeUp 0.4s ease both;
+}
+.check-item:hover {
+background: rgba(212,168,67,0.08);
+border-color: rgba(212,168,67,0.35);
+transform: translateX(-2px);
+}
+.check-item.checked {
+background: rgba(26,122,50,0.1);
+border-color: rgba(26,122,50,0.3);
+opacity: 0.65;
+}
+.check-item.checked .ci-title {
+text-decoration: line-through;
+color: #6b8060;
+}
+.check-item.checked .ci-time { color: #4caf50; opacity:0.7; }
+
+@keyframes fadeUp {
+from { opacity:0; transform:translateY(10px); }
+to { opacity:1; transform:translateY(0); }
+}
+
+/* Checkbox circle */
+.ci-box {
+width:26px; height:26px; min-width:26px;
+border-radius:50%;
+border: 2px solid rgba(212,168,67,0.35);
+display:flex; align-items:center; justify-content:center;
+transition: all 0.3s cubic-bezier(.4,0,.2,1);
+margin-top: 1px;
+background: rgba(212,168,67,0.05);
+}
+.check-item.checked .ci-box {
+background: #2d7a30;
+border-color: #2d7a30;
+transform: scale(1.08);
+}
+.ci-box svg { opacity:0; transform:scale(0); transition:all 0.2s ease; }
+.check-item.checked .ci-box svg { opacity:1; transform:scale(1); }
+
+/* Content */
+.ci-content { flex:1; }
+.ci-row { display:flex; align-items:center; gap:8px; margin-bottom:2px; }
+.ci-emoji { font-size:15px; }
+.ci-time { font-size:10px; color:#d4a843; font-weight:700; letter-spacing:1px; }
+.ci-star { font-size:11px; }
+.ci-title { font-size:15px; font-weight:700; color:#f0e0b0; transition:color 0.25s; }
+.ci-sub { font-size:12px; color:#8b6a3a; margin-top:2px; line-height:1.5; }
+
+/* Info button */
+.ci-info {
+background: rgba(212,168,67,0.1);
+border: 1px solid rgba(212,168,67,0.2);
+color: #d4a843;
+font-size:13px;
+width:28px; height:28px;
+border-radius:50%;
+display:flex; align-items:center; justify-content:center;
+cursor:pointer;
+flex-shrink:0;
+margin-top:2px;
+transition: all 0.2s;
+}
+.ci-info:hover { background:rgba(212,168,67,0.2); }
+
+/* Group label */
+.group-label {
+font-size:10px; color:#8b6020; letter-spacing:2px;
+text-transform:uppercase; margin: 20px 0 8px 2px;
+}
+
+/* Complete */
+.complete-msg {
+text-align:center; padding:20px 0; display:none;
+animation: fadeIn 0.5s ease both;
+}
+.complete-msg.show { display:block; }
+.complete-msg h2 {
+font-family:‘Cinzel’,serif; font-size:20px; color:#d4a843; margin-bottom:6px;
+}
+.complete-msg p { font-size:13px; color:#8b6a3a; }
+
+/* Reset */
+.reset-btn {
+display:block; margin:24px auto 0;
+background:transparent;
+border:1px solid rgba(139,96,32,0.4);
+color:#8b6020; font-family:‘Tajawal’,sans-serif;
+font-size:12px; padding:8px 24px;
+border-radius:50px; cursor:pointer;
+transition:all 0.2s; letter-spacing:1px;
+}
+.reset-btn:hover { border-color:#d4a843; color:#d4a843; }
+
+/* ═══ PANEL ═══ */
+.panel-overlay {
+position:fixed; inset:0;
+background:rgba(0,0,0,0.75);
+z-index:100; display:none;
+align-items:flex-end;
+}
+.panel-overlay.open { display:flex; }
+.panel {
+background: linear-gradient(160deg,#2a1a08,#1a0e05);
+border-top:3px solid #d4a843;
+border-radius:24px 24px 0 0;
+width:100%; max-width:520px; margin:0 auto;
+padding:24px 20px 44px;
+max-height:85vh; overflow-y:auto;
+animation:slideUp 0.35s cubic-bezier(.4,0,.2,1);
+position:relative;
+}
+@keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+.panel-close {
+position:absolute; top:14px; left:16px;
+background:rgba(255,255,255,0.08);
+border:1px solid rgba(255,255,255,0.1);
+color:#aaa; font-size:16px;
+width:30px; height:30px; border-radius:50%;
+cursor:pointer; display:flex; align-items:center; justify-content:center;
+}
+.panel-time { font-size:11px; color:#d4a843; letter-spacing:2px; margin-bottom:4px; }
+.panel-title { font-size:21px; font-weight:900; color:#f5e8c8; margin-bottom:6px; }
+.panel-emoji-row { font-size:26px; margin-bottom:14px; }
+.sblock {
+background:rgba(255,255,255,0.04);
+border:1px solid rgba(212,168,67,0.15);
+border-radius:14px; padding:14px; margin-bottom:10px;
+}
+.sblock h3 { font-size:11px; color:#d4a843; letter-spacing:2px; text-transform:uppercase; margin-bottom:10px; }
+.sblock p, .sblock li { font-size:13px; color:#c8b090; line-height:1.8; }
+.sblock ul { padding-right:16px; }
+.sblock li { margin-bottom:4px; }
+.tip-row { display:flex; align-items:flex-start; gap:8px; margin-bottom:6px; }
+.tip-icon { font-size:15px; min-width:20px; }
+.tip-text { font-size:13px; color:#c8b090; line-height:1.6; }
+.tag {
+display:inline-block;
+background:rgba(212,168,67,0.12);
+border:1px solid rgba(212,168,67,0.25);
+color:#d4a843; font-size:11px;
+padding:3px 10px; border-radius:50px;
+margin:3px 3px 3px 0;
+}
+.panel::-webkit-scrollbar { width:3px; }
+.panel::-webkit-scrollbar-thumb { background:#5a3e1b; border-radius:10px; }
+
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+</style>
+
+</head>
+<body>
+<div class="page">
+
+  <!-- TITLE -->
+
+  <div class="title-wrap">
+    <span class="scroll-icon">🗺️</span>
+    <h1>POOLE TREASURE MAP</h1>
+    <p>السبت · دليل المغامر · اضغط أي علامة للتفاصيل</p>
+  </div>
+
+  <!-- MAP -->
+
+  <div class="map-container">
+    <svg class="map-svg" viewBox="0 0 400 520" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="pg" cx="50%" cy="50%" r="70%">
+          <stop offset="0%" stop-color="#f4dba0"/>
+          <stop offset="60%" stop-color="#e8c97a"/>
+          <stop offset="100%" stop-color="#c9a04a"/>
+        </radialGradient>
+        <pattern id="noise" x="0" y="0" width="4" height="4" patternUnits="userSpaceOnUse">
+          <circle cx="1" cy="1" r="0.5" fill="rgba(100,60,0,0.07)"/>
+          <circle cx="3" cy="3" r="0.3" fill="rgba(100,60,0,0.05)"/>
+        </pattern>
+      </defs>
+      <rect width="400" height="520" fill="url(#pg)"/>
+      <rect width="400" height="520" fill="url(#noise)"/>
+      <!-- aged corners -->
+      <ellipse cx="0" cy="0" rx="80" ry="80" fill="rgba(120,70,10,0.22)"/>
+      <ellipse cx="400" cy="0" rx="70" ry="70" fill="rgba(120,70,10,0.18)"/>
+      <ellipse cx="0" cy="520" rx="85" ry="85" fill="rgba(120,70,10,0.2)"/>
+      <ellipse cx="400" cy="520" rx="75" ry="75" fill="rgba(120,70,10,0.17)"/>
+      <!-- border -->
+      <rect x="8" y="8" width="384" height="504" rx="12" fill="none" stroke="#8b5e20" stroke-width="2" stroke-dasharray="8,4"/>
+      <rect x="14" y="14" width="372" height="492" rx="10" fill="none" stroke="#c9912a" stroke-width="1" opacity="0.4"/>
+      <text x="12" y="28" font-size="16" fill="#7a4e18" opacity="0.6">✦</text>
+      <text x="370" y="28" font-size="16" fill="#7a4e18" opacity="0.6">✦</text>
+      <text x="12" y="512" font-size="16" fill="#7a4e18" opacity="0.6">✦</text>
+      <text x="370" y="512" font-size="16" fill="#7a4e18" opacity="0.6">✦</text>
+      <!-- sea -->
+      <path d="M0 385 Q60 365 120 378 Q180 392 240 372 Q300 352 360 368 Q380 374 400 368 L400 520 L0 520Z" fill="#5a9fc8" opacity="0.3"/>
+      <path d="M0 405 Q60 390 120 400 Q180 412 240 395 Q300 378 360 392 Q380 398 400 390 L400 520 L0 520Z" fill="#3a7fa8" opacity="0.35"/>
+      <path d="M25 415 Q45 408 65 415 M95 418 Q115 411 135 418 M165 410 Q185 403 205 410 M235 416 Q255 409 275 416 M305 412 Q325 405 345 412 M368 418 Q382 412 396 418" stroke="white" stroke-width="1.3" fill="none" opacity="0.3"/>
+      <text x="200" y="460" text-anchor="middle" font-size="10" fill="#1a4a6a" font-style="italic" opacity="0.65">~ Poole Harbour ~</text>
+      <text x="55" y="482" font-size="13" opacity="0.35">🐟</text>
+      <text x="325" y="492" font-size="11" opacity="0.35">🦀</text>
+      <text x="175" y="498" font-size="9" opacity="0.3">⚓</text>
+      <!-- land green -->
+      <ellipse cx="78" cy="185" rx="32" ry="18" fill="#7ab86a" opacity="0.25"/>
+      <text x="78" y="190" text-anchor="middle" font-size="9" fill="#3a6a20" opacity="0.55">⛰</text>
+      <ellipse cx="325" cy="205" rx="26" ry="14" fill="#7ab86a" opacity="0.2"/>
+      <text x="325" y="210" text-anchor="middle" font-size="8" fill="#3a6a20" opacity="0.45">🌳</text>
+      <!-- roads -->
+      <path d="M145 95 L255 95" stroke="#b08040" stroke-width="2.5" opacity="0.25" stroke-linecap="round"/>
+      <path d="M200 95 L200 375" stroke="#b08040" stroke-width="2" opacity="0.2" stroke-linecap="round"/>
+      <!-- treasure trail -->
+      <path d="M200 58 L200 95 L162 95 L132 148 L168 208 L200 258 L234 308 L268 352" stroke="#c94a20" stroke-width="2" fill="none" stroke-dasharray="6,4" opacity="0.55"/>
+      <path d="M268 352 L218 368 L168 352" stroke="#c94a20" stroke-width="2" fill="none" stroke-dasharray="6,4" opacity="0.55"/>
+      <!-- MAP TITLE -->
+      <text x="200" y="34" text-anchor="middle" font-family="serif" font-size="12" fill="#5a2e08" font-weight="bold" letter-spacing="2">خريطة كنز POOLE</text>
+      <!-- COMPASS -->
+      <g transform="translate(350,62)">
+        <circle cx="0" cy="0" r="22" fill="#d4a843" opacity="0.12" stroke="#8b6020" stroke-width="1"/>
+        <text x="0" y="-10" text-anchor="middle" font-size="8" fill="#5a2e08" font-weight="bold">N</text>
+        <text x="0" y="15" text-anchor="middle" font-size="8" fill="#5a2e08">S</text>
+        <text x="-14" y="4" text-anchor="middle" font-size="8" fill="#5a2e08">W</text>
+        <text x="14" y="4" text-anchor="middle" font-size="8" fill="#5a2e08">E</text>
+        <path d="M0,-16 L2.5,-4 L0,-7 L-2.5,-4Z" fill="#c94a20"/>
+        <path d="M0,16 L2.5,4 L0,7 L-2.5,4Z" fill="#5a2e08" opacity="0.45"/>
+        <circle cx="0" cy="0" r="2.5" fill="#c94a20"/>
+      </g>
+      <!-- scale -->
+      <g transform="translate(24,492)">
+        <line x1="0" y1="0" x2="55" y2="0" stroke="#5a2e08" stroke-width="1.2"/>
+        <line x1="0" y1="-3" x2="0" y2="3" stroke="#5a2e08" stroke-width="1.2"/>
+        <line x1="55" y1="-3" x2="55" y2="3" stroke="#5a2e08" stroke-width="1.2"/>
+        <text x="27" y="-5" text-anchor="middle" font-size="6.5" fill="#5a2e08">500m</text>
+      </g>
+
+```
+  <!-- ── PINS ── -->
+  <!-- 1 Café -->
+  <g class="pin" onclick="openPanel('cafe')">
+    <circle cx="200" cy="58" r="17" fill="#4caf50" stroke="#2a6e2d" stroke-width="2"/>
+    <text x="200" y="63" text-anchor="middle" font-size="13">☕</text>
+    <path d="M200 75 L196 83 L200 80 L204 83Z" fill="#2a6e2d"/>
+    <text x="200" y="95" text-anchor="middle" font-size="8" fill="#5a2e08" font-weight="bold">8:30 صباحاً</text>
+    <text x="200" y="104" text-anchor="middle" font-size="7" fill="#7a4e18">Salt Pig</text>
+  </g>
+  <!-- 2 Harbour Life -->
+  <g class="pin" onclick="openPanel('harbour')">
+    <circle cx="162" cy="125" r="17" fill="#e85d3a" stroke="#a03020" stroke-width="2"/>
+    <text x="162" y="130" text-anchor="middle" font-size="13">🌊</text>
+    <path d="M162 142 L158 150 L162 147 L166 150Z" fill="#a03020"/>
+    <text x="152" y="161" text-anchor="middle" font-size="8" fill="#5a2e08" font-weight="bold">10:00</text>
+    <text x="152" y="170" text-anchor="middle" font-size="6.5" fill="#7a4e18">Harbour Life</text>
+  </g>
+  <!-- 3 Setting Sail -->
+  <g class="pin" onclick="openPanel('sail')">
+    <circle cx="132" cy="180" r="17" fill="#e85d3a" stroke="#a03020" stroke-width="2"/>
+    <text x="132" y="185" text-anchor="middle" font-size="13">🏴‍☠️</text>
+    <path d="M132 197 L128 205 L132 202 L136 205Z" fill="#a03020"/>
+    <text x="122" y="216" text-anchor="middle" font-size="8" fill="#5a2e08" font-weight="bold">10:45</text>
+    <text x="122" y="225" text-anchor="middle" font-size="6.5" fill="#7a4e18">Setting Sail</text>
+  </g>
+  <!-- 4 Shipwreck ⭐ -->
+  <g class="pin" onclick="openPanel('shipwreck')">
+    <circle cx="168" cy="238" r="21" fill="#d4a843" stroke="#8b6020" stroke-width="2.5"/>
+    <circle cx="168" cy="238" r="21" fill="none" stroke="white" stroke-width="1.5" stroke-dasharray="3,2" opacity="0.5"/>
+    <text x="168" y="244" text-anchor="middle" font-size="15">💀</text>
+    <path d="M168 259 L163 269 L168 265 L173 269Z" fill="#8b6020"/>
+    <text x="168" y="280" text-anchor="middle" font-size="8" fill="#5a2e08" font-weight="bold">11:45 ⭐</text>
+    <text x="168" y="289" text-anchor="middle" font-size="6.5" fill="#7a4e18">Shipwreck!</text>
+  </g>
+  <!-- 5 Lunch -->
+  <g class="pin" onclick="openPanel('lunch')">
+    <circle cx="200" cy="305" r="15" fill="#4caf50" stroke="#2a6e2d" stroke-width="2"/>
+    <text x="200" y="310" text-anchor="middle" font-size="12">🍽️</text>
+    <path d="M200 320 L196 327 L200 324 L204 327Z" fill="#2a6e2d"/>
+    <text x="200" y="337" text-anchor="middle" font-size="7.5" fill="#5a2e08" font-weight="bold">1:15 مساءً</text>
+  </g>
+  <!-- 6 Scaplen's -->
+  <g class="pin" onclick="openPanel('scaplens')">
+    <circle cx="234" cy="290" r="17" fill="#e85d3a" stroke="#a03020" stroke-width="2"/>
+    <text x="234" y="295" text-anchor="middle" font-size="13">🏰</text>
+    <path d="M234 307 L230 315 L234 312 L238 315Z" fill="#a03020"/>
+    <text x="250" y="326" text-anchor="middle" font-size="7.5" fill="#5a2e08" font-weight="bold">2:00</text>
+    <text x="250" y="335" text-anchor="middle" font-size="6.5" fill="#7a4e18">Scaplen's</text>
+  </g>
+  <!-- 7 Exhibitions -->
+  <g class="pin" onclick="openPanel('exhibitions')">
+    <circle cx="268" cy="330" r="15" fill="#e85d3a" stroke="#a03020" stroke-width="2"/>
+    <text x="268" y="335" text-anchor="middle" font-size="12">🖼️</text>
+    <path d="M268 345 L264 352 L268 349 L272 352Z" fill="#a03020"/>
+    <text x="280" y="362" text-anchor="middle" font-size="7.5" fill="#5a2e08" font-weight="bold">2:30</text>
+  </g>
+  <!-- 8 Gift Shop -->
+  <g class="pin" onclick="openPanel('giftshop')">
+    <circle cx="220" cy="355" r="15" fill="#e85d3a" stroke="#a03020" stroke-width="2"/>
+    <text x="220" y="360" text-anchor="middle" font-size="12">🛍️</text>
+    <path d="M220 370 L216 377 L220 374 L224 377Z" fill="#a03020"/>
+    <text x="208" y="387" text-anchor="middle" font-size="7.5" fill="#5a2e08" font-weight="bold">3:15</text>
+  </g>
+  <!-- 9 Old Town -->
+  <g class="pin" onclick="openPanel('oldtown')">
+    <circle cx="100" cy="305" r="17" fill="#3aade8" stroke="#1a6a9a" stroke-width="2"/>
+    <text x="100" y="310" text-anchor="middle" font-size="13">🏛️</text>
+    <path d="M100 322 L96 330 L100 327 L104 330Z" fill="#1a6a9a"/>
+    <text x="100" y="341" text-anchor="middle" font-size="7" fill="#5a2e08">Old Town</text>
+  </g>
+  <!-- 10 Quay -->
+  <g class="pin" onclick="openPanel('quay')">
+    <circle cx="310" cy="352" r="17" fill="#3aade8" stroke="#1a6a9a" stroke-width="2"/>
+    <text x="310" y="357" text-anchor="middle" font-size="13">⚓</text>
+    <path d="M310 369 L306 377 L310 374 L314 377Z" fill="#1a6a9a"/>
+    <text x="310" y="387" text-anchor="middle" font-size="7" fill="#5a2e08">Poole Quay</text>
+  </g>
+  <!-- 11 Pickled Berry -->
+  <g class="pin" onclick="openPanel('pickledberry')">
+    <circle cx="155" cy="352" r="15" fill="#4caf50" stroke="#2a6e2d" stroke-width="2"/>
+    <text x="155" y="357" text-anchor="middle" font-size="12">🍓</text>
+    <path d="M155 367 L151 374 L155 371 L159 374Z" fill="#2a6e2d"/>
+    <text x="155" y="383" text-anchor="middle" font-size="6.5" fill="#5a2e08">Pickled Berry</text>
+  </g>
+  <!-- 12 St Tropez -->
+  <g class="pin" onclick="openPanel('sttropez')">
+    <circle cx="338" cy="318" r="15" fill="#4caf50" stroke="#2a6e2d" stroke-width="2"/>
+    <text x="338" y="323" text-anchor="middle" font-size="12">🥐</text>
+    <path d="M338 333 L334 340 L338 337 L342 340Z" fill="#2a6e2d"/>
+    <text x="338" y="350" text-anchor="middle" font-size="6.5" fill="#5a2e08">St Tropez</text>
+  </g>
+</svg>
+```
+
+  </div>
+
+  <div class="hint">✦ اضغط أي علامة للتفاصيل الكاملة ✦</div>
+
+  <!-- ═══════════════════════════ -->
+
+  <!--       CHECKLIST            -->
+
+  <!-- ═══════════════════════════ -->
+
+  <div class="section-sep">
+    <div class="line r"></div>
+    <span>📋 قائمة مهامك</span>
+    <div class="line"></div>
+  </div>
+
+  <div class="progress-wrap"><div class="progress-bar" id="pbar"></div></div>
+  <div class="progress-text" id="ptxt">0 من 12 محطة</div>
+
+  <!-- Group 1: Museum -->
+
+  <div class="group-label">🏛️ داخل المتحف</div>
+
+  <div class="check-item" onclick="toggle(this)" data-key="cafe">
+    <div class="ci-box"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <div class="ci-content">
+      <div class="ci-row"><span class="ci-emoji">☕</span><span class="ci-time">8:30 صباحاً</span></div>
+      <div class="ci-title">فطور في Old Town Salt Pig</div>
+      <div class="ci-sub">كيش · سجق محلي · قهوة specialty</div>
+    </div>
+    <div class="ci-info" onclick="event.stopPropagation();openPanel('cafe')">ℹ</div>
+  </div>
+
+  <div class="check-item" onclick="toggle(this)" data-key="harbour">
+    <div class="ci-box"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <div class="ci-content">
+      <div class="ci-row"><span class="ci-emoji">🌊</span><span class="ci-time">10:00 صباحاً</span></div>
+      <div class="ci-title">Harbour Life Gallery</div>
+      <div class="ci-sub">تاريخ الميناء من العصر الجليدي · الصيد · RNLI</div>
+    </div>
+    <div class="ci-info" onclick="event.stopPropagation();openPanel('harbour')">ℹ</div>
+  </div>
+
+  <div class="check-item" onclick="toggle(this)" data-key="sail">
+    <div class="ci-box"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <div class="ci-content">
+      <div class="ci-row"><span class="ci-emoji">🏴‍☠️</span><span class="ci-time">10:45 صباحاً</span></div>
+      <div class="ci-title">Setting Sail Gallery</div>
+      <div class="ci-sub">قراصنة · خرافات البحر · تجارة Newfoundland</div>
+    </div>
+    <div class="ci-info" onclick="event.stopPropagation();openPanel('sail')">ℹ</div>
+  </div>
+
+  <div class="check-item" onclick="toggle(this)" data-key="shipwreck" style="border-color:rgba(212,168,67,0.4);background:rgba(212,168,67,0.07)">
+    <div class="ci-box" style="border-color:rgba(212,168,67,0.5)"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <div class="ci-content">
+      <div class="ci-row"><span class="ci-emoji">💀</span><span class="ci-time">11:45 صباحاً</span><span class="ci-star">⭐</span></div>
+      <div class="ci-title">Shipwreck! Gallery</div>
+      <div class="ci-sub">القارب الحديدي 2000 سنة · حطام سفن من القرن 13-17</div>
+    </div>
+    <div class="ci-info" onclick="event.stopPropagation();openPanel('shipwreck')">ℹ</div>
+  </div>
+
+  <div class="check-item" onclick="toggle(this)" data-key="lunch">
+    <div class="ci-box"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <div class="ci-content">
+      <div class="ci-row"><span class="ci-emoji">🍽️</span><span class="ci-time">1:15 مساءً</span></div>
+      <div class="ci-title">استراحة الغداء</div>
+      <div class="ci-sub">في الكافيه أو Custom House Bistro على الميناء</div>
+    </div>
+    <div class="ci-info" onclick="event.stopPropagation();openPanel('lunch')">ℹ</div>
+  </div>
+
+  <div class="check-item" onclick="toggle(this)" data-key="scaplens">
+    <div class="ci-box"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <div class="ci-content">
+      <div class="ci-row"><span class="ci-emoji">🏰</span><span class="ci-time">2:00 مساءً</span></div>
+      <div class="ci-title">Scaplen's Court والحديقة</div>
+      <div class="ci-sub">بيت تاجر من القرن 15 · أعشاب طبية قديمة</div>
+    </div>
+    <div class="ci-info" onclick="event.stopPropagation();openPanel('scaplens')">ℹ</div>
+  </div>
+
+  <div class="check-item" onclick="toggle(this)" data-key="exhibitions">
+    <div class="ci-box"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <div class="ci-content">
+      <div class="ci-row"><span class="ci-emoji">🖼️</span><span class="ci-time">2:30 مساءً</span></div>
+      <div class="ci-title">المعارض الحالية</div>
+      <div class="ci-sub">Power of Poole · Lucian Freud للرسم</div>
+    </div>
+    <div class="ci-info" onclick="event.stopPropagation();openPanel('exhibitions')">ℹ</div>
+  </div>
+
+  <div class="check-item" onclick="toggle(this)" data-key="giftshop">
+    <div class="ci-box"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <div class="ci-content">
+      <div class="ci-row"><span class="ci-emoji">🛍️</span><span class="ci-time">3:15 مساءً</span></div>
+      <div class="ci-title">متجر الهدايا</div>
+      <div class="ci-sub">مجسمات · بطاقات تاريخية · كتب · ⚠️ آخر دخول 4م</div>
+    </div>
+    <div class="ci-info" onclick="event.stopPropagation();openPanel('giftshop')">ℹ</div>
+  </div>
+
+  <!-- Group 2: After Museum -->
+
+  <div class="group-label">📍 بعد المتحف</div>
+
+  <div class="check-item" onclick="toggle(this)" data-key="oldtown">
+    <div class="ci-box"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <div class="ci-content">
+      <div class="ci-row"><span class="ci-emoji">🏛️</span><span class="ci-time">بعد 4م</span></div>
+      <div class="ci-title">Poole Old Town</div>
+      <div class="ci-sub">Cockle Trail · واجهات جورجية · شوارع تاريخية مجانية</div>
+    </div>
+    <div class="ci-info" onclick="event.stopPropagation();openPanel('oldtown')">ℹ</div>
+  </div>
+
+  <div class="check-item" onclick="toggle(this)" data-key="quay">
+    <div class="ci-box"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <div class="ci-content">
+      <div class="ci-row"><span class="ci-emoji">⚓</span><span class="ci-time">بعد 4م</span></div>
+      <div class="ci-title">Poole Quay</div>
+      <div class="ci-sub">كورنيش الميناء · سفن Sunseeker · fish & chips</div>
+    </div>
+    <div class="ci-info" onclick="event.stopPropagation();openPanel('quay')">ℹ</div>
+  </div>
+
+  <!-- Group 3: Food -->
+
+  <div class="group-label">🍽️ مطاعم مقترحة</div>
+
+  <div class="check-item" onclick="toggle(this)" data-key="pickledberry">
+    <div class="ci-box"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <div class="ci-content">
+      <div class="ci-row"><span class="ci-emoji">🍓</span><span class="ci-time">العشاء</span></div>
+      <div class="ci-title">The Pickled Berry</div>
+      <div class="ci-sub">⭐ 4.9 · احجزي مسبقاً! · أفضل مطعم في المنطقة</div>
+    </div>
+    <div class="ci-info" onclick="event.stopPropagation();openPanel('pickledberry')">ℹ</div>
+  </div>
+
+  <div class="check-item" onclick="toggle(this)" data-key="sttropez">
+    <div class="ci-box"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <div class="ci-content">
+      <div class="ci-row"><span class="ci-emoji">🥐</span><span class="ci-time">الغداء / العشاء</span></div>
+      <div class="ci-title">St Tropez Lounge</div>
+      <div class="ci-sub">⭐ 4.8 · فرنسي بحري · جلسة خارجية على الميناء</div>
+    </div>
+    <div class="ci-info" onclick="event.stopPropagation();openPanel('sttropez')">ℹ</div>
+  </div>
+
+  <div class="complete-msg" id="completemsg">
+    <div style="font-size:38px;margin-bottom:8px">🎉</div>
+    <h2>أتممتِ الجولة!</h2>
+    <p>يوم ممتاز في Poole 🌊</p>
+  </div>
+
+<button class="reset-btn" onclick="resetAll()">↺ إعادة تعيين</button>
+
+</div>
+
+<!-- ══════════ PANEL ══════════ -->
+
+<div class="panel-overlay" id="overlay" onclick="closePanelBg(event)">
+  <div class="panel" id="panel">
+    <button class="panel-close" onclick="closePanelBtn()">✕</button>
+    <div id="panel-content"></div>
+  </div>
+</div>
+
+<script>
+const TOTAL = 12;
+
+// ── CHECKLIST ──
+function toggle(el) {
+  el.classList.toggle('checked');
+  updateProgress();
+}
+function updateProgress() {
+  const done = document.querySelectorAll('.check-item.checked').length;
+  document.getElementById('pbar').style.width = Math.round(done/TOTAL*100)+'%';
+  document.getElementById('ptxt').textContent = done+' من '+TOTAL+' محطة';
+  document.getElementById('completemsg').classList.toggle('show', done===TOTAL);
+}
+function resetAll() {
+  document.querySelectorAll('.check-item').forEach(e=>e.classList.remove('checked'));
+  updateProgress();
+}
+
+// ── PANEL DATA ──
+const data = {
+  cafe:{time:'8:30 صباحاً',emoji:'☕ 🥐 🌿',title:'Old Town Salt Pig Café',
+    history:'هذا الكافيه يقع داخل Scaplen\'s Court، وهو بناء من العصور الوسطى عمره أكثر من 700 سنة! في زمن التجار البحريين، كانت هذه البنايات تُستخدم لتخزين البضائع القادمة من البحر. اليوم تحول لأجمل كافيه في المنطقة.',
+    details:'يُقدم الكافيه أكلات محلية طازجة كل يوم. يفتح من 8:30 صباحاً — مثالي لبداية يومك.',
+    tips:[{icon:'🥧',text:'جربي الكيش — قطعة كبيرة ولذيذة'},{icon:'🌭',text:'Sausage Roll محلي مشهور جداً'},{icon:'☕',text:'قهوتهم specialty وليست Nescafé!'}],
+    do:['اجلسي في الحديقة لو الجو لطيف','خذي وقتك — اليوم طويل'],
+    buy:['كيش اليوم','مشروب ساخن','كيكة صغيرة للطريق'],
+    avoid:'لا تملئي معدتك كثيراً — عندك يوم كامل!'},
+
+  harbour:{time:'10:00 صباحاً',emoji:'🌊 🐟 🚢',title:'Harbour Life Gallery',
+    history:'ميناء Poole يُعتبر من أكبر الموانئ الطبيعية في أوروبا، وعمره أكثر من 10,000 سنة! من العصر الجليدي حين كان المكان أرضاً جافة، وصولاً لحضارة الرومان الذين اكتشفوه كميناء تجاري، ثم التجار الإنجليز الذين بنوا ثروات ضخمة منه.',
+    details:'تغطي هذه القاعة تاريخ الميناء كاملاً — البيئة البحرية، الصيد، وكيف عاش الناس على البحر.',
+    tips:[{icon:'🦅',text:'في عرض Birds of Poole Harbour — مذهل'},{icon:'📸',text:'التصوير مسموح في كل مكان'}],
+    do:['اقرئي عن RNLI — إنقاذ البحر الملكي','شوفي التفاعلي عن البيئة البحرية'],
+    buy:[],avoid:''},
+
+  sail:{time:'10:45 صباحاً',emoji:'🏴‍☠️ ⚓ 🗺️',title:'Setting Sail Gallery',
+    history:'Poole كانت مركز إمبراطورية تجارية ضخمة! في القرن 17 أبحر منها المئات من السفن نحو كندا لتجارة سمك القد. هذه التجارة جعلت Poole من أغنى مدن بريطانيا. القرصان الشهير Harry Paye كان من Poole — وانتقمت منه الأساطيل الإسبانية بمهاجمة المدينة!',
+    details:'الحياة على السفن القديمة، الخرافات البحرية، والتاريخ الداكن للتجارة.',
+    tips:[{icon:'💀',text:'اقرئي عن أساطير القراصنة المحليين'},{icon:'🧭',text:'شوفي كيف كانوا يقرأون النجوم'}],
+    do:['ابحثي عن قصة القرصان Harry Paye','تأملي خريطة تجارة Newfoundland'],
+    buy:[],avoid:''},
+
+  shipwreck:{time:'11:45 صباحاً ⭐',emoji:'💀 🚢 🏺',title:'Shipwreck! Gallery — الكنز الحقيقي',
+    history:'هذه القاعة في Town Cellars — مخزن ميناء من القرن 13! القارب الحديدي Iron Age Logboat عمره 2,000 سنة وطوله 10 أمتار — وُجد سنة 1964 أثناء حفر قاع الميناء. الأكبر في جنوب بريطانيا! يضاف له Mortar Wreck من القرن 13، وحطام سفن من القرن 16 و17.',
+    details:'أجواء المكان مختلفة تماماً — إضاءة درامية، أحجار قديمة، وحطام سفن حقيقية حولك.',
+    tips:[{icon:'⏱️',text:'خصصي ساعة ونص على الأقل هنا'},{icon:'👆',text:'بعض القطع مسموح لمسها — اسأل المشرف'},{icon:'🗿',text:'ابحثي عن حجر Bethan — أجمل قصة في المتحف'}],
+    do:['صوري القارب الحديدي من كل الزوايا','اسأل المشرف عن آخر اكتشاف أثري'],
+    buy:[],avoid:'لا تتسرعي هنا — هذا قلب المتحف'},
+
+  lunch:{time:'1:15 مساءً',emoji:'🍽️ 🥗 ☕',title:'استراحة الغداء',
+    history:'منطقة Poole القديمة مليانة مطاعم صغيرة لأنها كانت قديماً حي التجار والبحارة.',
+    details:'عندك خيارين: ترجعين لكافيه المتحف Salt Pig، أو تطلعين لـ Custom House Bistro على الميناء.',
+    tips:[{icon:'💰',text:'Salt Pig: اقتصادي وقريب'},{icon:'🌊',text:'Custom House Bistro: مطل على البحر'},{icon:'⏰',text:'ما تأخذين أكثر من ساعة'}],
+    do:['ارتاحي ورجعي طاقتك','راجعي ماذا تبقى من المتحف'],
+    buy:[],avoid:''},
+
+  scaplens:{time:'2:00 مساءً',emoji:'🏰 🌿 🕯️',title:"Scaplen's Court",
+    history:"هذا المبنى أجمل بيت تاجر من العصور الوسطى في Poole، يعود لأواخر القرن 15! سكنه عائلة Scaplen من كبار التجار البحريين. الحديقة تحتوي نباتات طبية كانت تُستخدم للعلاج قبل الأدوية الحديثة — نعناع، خزامى، مريمية.",
+    details:'مكان هادئ جميل، مناسب للراحة بعد ساعات التجول.',
+    tips:[{icon:'📷',text:'الحديقة مثالية للصور في إضاءة طبيعية'},{icon:'🕯️',text:'اسأل عن قصص الأشباح في البناء القديم!'}],
+    do:['تجولي في الحديقة وشمي الأعشاب','صوري الأسقف الخشبية من الداخل'],
+    buy:[],avoid:''},
+
+  exhibitions:{time:'2:30 مساءً',emoji:'🖼️ ⚡ 🎨',title:'المعارض الحالية',
+    history:'Power of Poole: محطة كهرباء Poole رمز الحداثة من 1947 لـ 1993 — أطول بنية في المنطقة.\nLucian Freud: حفيد زيغموند فرويد، من أعظم رسامي القرن 20. هذا المعرض يُظهر طباعاته النادرة.',
+    details:'معرضان مختلفان — التاريخ الصناعي ثم الفن الراقي.',
+    tips:[{icon:'⚡',text:'Power of Poole: مذهل لمحبي التاريخ الصناعي'},{icon:'🖌️',text:'Lucian Freud: لمحبي الفن'}],
+    do:['اقرئي نبذة عن Lucian Freud قبل الدخول'],
+    buy:[],avoid:''},
+
+  giftshop:{time:'3:15 مساءً',emoji:'🛍️ 🎁 ✨',title:'متجر الهدايا',
+    history:'بيع الهدايا في المتاحف البريطانية تقليد عمره مئات السنين — كل قطعة مرتبطة بتاريخ Poole.',
+    details:'متجر صغير مختار بعناية — كل شي له صلة بتاريخ البحر والمدينة.',
+    tips:[{icon:'🧿',text:'ابحثي عن مجسمات القارب الحديدي'},{icon:'📬',text:'بطاقات بريدية بتصاميم تاريخية رائعة'},{icon:'📚',text:'كتاب تاريخ Poole — هدية ممتازة'}],
+    do:['خذي وقتك وتصفحي كل شي'],
+    buy:['مجسم القارب الحديدي 🚤','بطاقة بريدية تاريخية','كتيب عن Poole بالصور'],
+    avoid:'آخر دخول للمتحف 4:00 مساءً!'},
+
+  oldtown:{time:'بعد 4م',emoji:'🏛️ 🪨 🚶‍♀️',title:'Poole Old Town',
+    history:'Poole تأسست رسمياً سنة 1248. الشوارع التي تمشين فيها اليوم رسمها التجار الجورجيون في القرن 18. High Street تحتوي واجهات من القرن 18 محفوظة بشكل مذهل. ابحثي عن علامات Cockle Trail النحاسية في الرصيف.',
+    details:'مشي حر مجاني في أجمل شوارع تاريخية في جنوب إنجلترا.',
+    tips:[{icon:'🐚',text:'اتبعي علامات Cockle Trail النحاسية في الأرض'},{icon:'📸',text:'الواجهات الجورجية مثالية للتصوير'}],
+    do:['اتبعي الـ Cockle Trail','ابحثي عن Guildhall — البلدية القديمة'],
+    buy:['قهوة take away من كافيه محلي'],avoid:''},
+
+  quay:{time:'بعد 4م',emoji:'⚓ 🛥️ 🌅',title:'Poole Quay',
+    history:'هذا الميناء كان مركز تجارة بريطانيا مع العالم الجديد في القرن 18. مساحته 36 كيلومتر مربع — من أكبر الموانئ الطبيعية في أوروبا! هنا صنعت عائلات ثروتها من رحلات Newfoundland.',
+    details:'مشي رائع على الكورنيش، مطاعم، وقوارب فاخرة.',
+    tips:[{icon:'🌅',text:'أجمل في الغروب — السماء تنعكس على الماء'},{icon:'🦭',text:'أحياناً تُشاهد فقمات قرب الميناء!'},{icon:'🎣',text:'صيد السرطانات (crabbing) قرب الميناء — مجاناً'}],
+    do:['تمشي على طول الكورنيش','شوفي سفن Sunseeker الفاخرة — تُصنع هنا!'],
+    buy:['fish & chips طازج'],avoid:''},
+
+  pickledberry:{time:'العشاء',emoji:'🍓 🥩 🍷',title:'The Pickled Berry',
+    history:'مطعم مستقل أصبح من أفضل مطاعم Dorset — تقييم 4.9 من 5 من قرابة 500 مراجعة. لا يتسع لأكثر من 30 شخصاً مما يعطي خدمة استثنائية.',
+    details:'يُغير القائمة حسب الموسم. كل طبق مصنوع بعناية من مكونات محلية.',
+    tips:[{icon:'📞',text:'احجزي مسبقاً — يمتلئ دائماً!'},{icon:'🥩',text:'اطلبي ما يوصي به النادل — دائماً ممتاز'},{icon:'⏰',text:'مفتوح السبت 9:30 صباحاً حتى 11 مساءً'}],
+    do:['جربي 3 كورسات كاملة'],
+    buy:['تجربة كورس كامل'],avoid:'لا تحضري بدون حجز!'},
+
+  sttropez:{time:'الغداء أو العشاء',emoji:'🥐 🦞 🌊',title:'St Tropez Lounge',
+    history:'مطعم فرنسي بحري على واجهة الميناء مباشرة. أجواؤه تذكرك بجنوب فرنسا — لكنك في Poole! يشتهر بالمأكولات البحرية الطازجة.',
+    details:'تقييم 4.8 من 5. الطاولات الخارجية مطلة على الميناء مباشرة.',
+    tips:[{icon:'🦪',text:'المحار (oysters) طازج يومياً'},{icon:'🐟',text:'Dover Sole مشوية — طبق الشيف المفضل'},{icon:'🌞',text:'أفضل في الغداء يوم مشمس'}],
+    do:['اجلسي خارجاً إن الجو لطيف','جربي Tartiflette — طبق فرنسي مميز'],
+    buy:['طبق seafood كامل'],avoid:'مغلق الأحد — تأكدي من التوقيت'}
+};
+
+function openPanel(key) {
+  const d = data[key]; if(!d) return;
+  let h = `<div class="panel-time">${d.time}</div><div class="panel-title">${d.title}</div><div class="panel-emoji-row">${d.emoji}</div>`;
+  h += `<div class="sblock"><h3>📜 التاريخ والقصة</h3><p>${d.history.replace(/\n/g,'<br>')}</p></div>`;
+  if(d.details) h += `<div class="sblock"><h3>ℹ️ ماذا تتوقعين</h3><p>${d.details}</p></div>`;
+  if(d.tips&&d.tips.length) h += `<div class="sblock"><h3>💡 نصائح</h3>${d.tips.map(t=>`<div class="tip-row"><span class="tip-icon">${t.icon}</span><span class="tip-text">${t.text}</span></div>`).join('')}</div>`;
+  if(d.do&&d.do.length) h += `<div class="sblock"><h3>✅ اعمليها</h3><ul>${d.do.map(x=>`<li>${x}</li>`).join('')}</ul></div>`;
+  if(d.buy&&d.buy.length) h += `<div class="sblock"><h3>🛒 وش تشترين/تطلبين</h3>${d.buy.map(b=>`<span class="tag">${b}</span>`).join('')}</div>`;
+  if(d.avoid) h += `<div class="sblock" style="border-color:rgba(232,93,58,0.3)"><h3 style="color:#e85d3a">⚠️ انتبهي</h3><p>${d.avoid}</p></div>`;
+  document.getElementById('panel-content').innerHTML = h;
+  document.getElementById('overlay').classList.add('open');
+  document.getElementById('panel').scrollTop = 0;
+}
+function closePanelBg(e){ if(e.target===document.getElementById('overlay')) document.getElementById('overlay').classList.remove('open'); }
+function closePanelBtn(){ document.getElementById('overlay').classList.remove('open'); }
+</script>
+
+</body>
+</html>
